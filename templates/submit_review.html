@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Review</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Submit a Review</h1>
+        <div>
+            <label for="courseSelect">Select Course:</label>
+            <select id="courseSelect"></select><br><br>
+            <textarea id="reviewText" placeholder="Write your review here..." rows="4" cols="50"></textarea><br><br>
+            <button class="button" onclick="submitReview()">Submit Review</button>
+            <button class="button" onclick="redirectToOverview()">Back to Course Overview</button>
+        </div>
+    </div>
+
+    <script>
+        async function loadCourses() {
+            const response = await fetch('/get_courses');
+            const data = await response.json();
+            const courseSelect = document.getElementById('courseSelect');
+            data.courses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course.course_code;
+                option.textContent = `${course.course_code} - ${course.course_name}`;
+                courseSelect.appendChild(option);
+            });
+        }
+
+        async function submitReview() {
+            const courseCode = document.getElementById('courseSelect').value;
+            const review = document.getElementById('reviewText').value.trim(); // Trim whitespace
+
+            if (!courseCode) {
+                alert("Please select a course.");
+                return;
+            }
+
+            if (!review) { // Check if review is empty after trimming
+                alert("Please write a meaningful review.");
+                return;
+            }
+
+            const response = await fetch('/submit_review', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ course_code: courseCode, review })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert(`Review submitted successfully!`);
+                window.location.href = "/course_overview";
+            } else {
+                const error = await response.json();
+                alert(error.message);
+            }
+        }
+
+
+        function redirectToOverview() {
+            window.location.href = "/course_overview";
+        }
+
+        window.onload = loadCourses;
+    </script>
+</body>
+
+</html>

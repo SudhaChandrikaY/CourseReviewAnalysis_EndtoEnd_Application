@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Course Reviews</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+
+</head>
+
+<body>
+    <div class="container">
+        <h1>All Course Reviews</h1>
+        <div class="button-container">
+            <button class="button" onclick="redirectToOverview()">Back to Overview</button>
+            <button class="button" onclick="showVisualizationModal()">View Visualizations</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>S. No</th>
+                    <th>Course Code</th>
+                    <th>Course Name</th>
+                    <th>Total Reviews</th>
+                    <th>No. of Positive Reviews</th>
+                    <th>Positive Rate</th>
+                    <th>No. of Negative Reviews</th>
+                    <th>Negative Rate</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for idx, course in enumerate(courses) %}
+                <tr>
+                    <td>{{ idx + 1 }}</td>
+                    <td>{{ course[0] }}</td>
+                    <td>{{ course[1] }}</td>
+                    <td>
+                        <a href="#" onclick="viewReviews('{{ course[0] }}')">View ({{ course[2] }})</a>
+                    </td>
+                    <td class="positive">{{ course[3] }}</td>
+                    <td class="positive">{{ "%.1f" | format(course[5]) }}%</td>
+                    <td class="negative">{{ course[4] }}</td>
+                    <td class="negative">{{ "%.1f" | format(course[6]) }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <!-- Visualization Modal -->
+    <div id="visualizationModal" class="vsmodal">
+        <div class="vsmodal-content">
+            <span class="close" onclick="closeVisualizationModal()">&times;</span>
+            <h2>Course Visualizations</h2>
+            <select id="courseSelect" onchange="updateCharts()">
+                <option value="all">All Courses</option>
+                {% for course in courses %}
+                <option value="{{ course[0] }}">{{ course[1] }}</option>
+                {% endfor %}
+            </select>
+            <div id="charts-container">
+                <div id="sentiment_distribution_chart"></div>
+                <div id="undergrad_vs_grad_chart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for displaying reviews -->
+    <div id="reviewModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="courseCode"></h2>
+            <ul id="reviewList"></ul>
+        </div>
+    </div>
+
+    <script>
+        function redirectToOverview() {
+            window.location.href = "/course_overview";
+        }
+        function viewReviews(courseCode) {
+            document.getElementById("courseCode").innerText = "Course Code: " + courseCode;
+
+            fetch(`/get_course_reviews/${courseCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    const reviews = data.reviews;
+                    const reviewList = document.getElementById("reviewList");
+                    reviewList.innerHTML = ""; // Clear previous reviews
+                    reviews.forEach(review => {
+                        const listItem = document.createElement("li");
+                        listItem.textContent = `${review[0]} - ${review[1]}`;
+                        reviewList.appendChild(listItem);
+                    });
+
+                    // Show the modal
+                    document.getElementById("reviewModal").style.display = "block";
+                })
+                .catch(error => {
+                    console.error("Error fetching reviews:", error);
+                });
+        }
+
+        function closeModal() {
+            document.getElementById("reviewModal").style.display = "none";
+        }
+
+
+
+        // Show Visualization Modal script
+
+        let visualizationsLoaded = false;
+
+        function showVisualizationModal() {
+            document.getElementById("visualizationModal").style.display = "block";
+            if (!visualizationsLoaded) {
+                loadDefaultCharts();
+                visualizationsLoaded = true;
+            }
+        }
+        function closeVisualizationModal() {
+            document.getElementById("visualizationModal").style.display = "none";
+        }
+        function loadDefaultCharts() {
+            fetch("/get_visualization_data")
+                .then(response => response.json())
+                .then(data => {
+                    const undergradCourses = data.undergrad || { positive_reviews: 0, negative_reviews: 0 };
+                    const gradCourses = data.grad || { positive_reviews: 0, negative_reviews: 0 };
+
+                    // Bar Chart: Undergrad vs Grad (Positive & Negative Reviews)
+                    Highcharts.chart('undergrad_vs_grad_chart', {
+                        chart: { type: 'column' },
+                        title: { text: 'Undergrad vs Grad Reviews' },
+                        xAxis: { categories: ['Undergrad Courses', 'Grad Courses'] },
+                        yAxis: { title: { text: 'Number of Reviews' } },
+                        series: [
+                            {
+                                name: 'Positive Reviews',
+                                data: [undergradCourses.positive_reviews, gradCourses.positive_reviews],
+                                color: 'green'
+                            },
+                            {
+                                name: 'Negative Reviews',
+                                data: [undergradCourses.negative_reviews, gradCourses.negative_reviews],
+                                color: 'red'
+                            }
+                        ],
+                        accessibility: { enabled: true }
+                    });
+
+                    // Pie Chart: Overall Sentiment Distribution
+                    const sentiments = data.sentiments || { positive: 0, negative: 0 };
+                    Highcharts.chart('sentiment_distribution_chart', {
+                        chart: { type: 'pie' },
+                        title: { text: 'Overall Sentiment Distribution' },
+                        series: [{
+                            name: 'Reviews',
+                            colorByPoint: true,
+                            data: [
+                                { name: 'Positive Reviews', y: sentiments.positive, color: 'green' },
+                                { name: 'Negative Reviews', y: sentiments.negative, color: 'red' }
+                            ]
+                        }],
+                        accessibility: { enabled: true }
+                    });
+                })
+                .catch(error => console.error("Error fetching visualization data:", error));
+        }
+        function updateCharts() {
+            const courseCode = document.getElementById("courseSelect").value;
+
+            if (courseCode === "all") {
+                loadDefaultCharts();
+            } else {
+                fetch(`/get_course_visualization_data/${courseCode}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update Pie Chart: Course-Specific Sentiment Distribution
+                        Highcharts.chart('sentiment_distribution_chart', {
+                            chart: { type: 'pie' },
+                            title: { text: `Sentiment Distribution for ${data.course_name}` },
+                            series: [{
+                                name: 'Reviews',
+                                colorByPoint: true,
+                                data: [
+                                    { name: 'Positive Reviews', y: data.positive_reviews, color: 'green' },
+                                    { name: 'Negative Reviews', y: data.negative_reviews, color: 'red' }
+                                ]
+                            }],
+                            accessibility: { enabled: true }
+                        });
+                    })
+                    .catch(error => console.error("Error fetching course-specific visualization data:", error));
+            }
+        }
+
+
+    </script>
+</body>
+
+</html>
