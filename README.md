@@ -94,9 +94,13 @@ Web Interface Demo
 - Backend: Flask API processes review inputs and returns predictions using the trained BERT model.
 ________________________________________
 Images
+
 ![image](https://github.com/user-attachments/assets/5c212f3f-1e8e-4e84-bb93-99c1b6192f83)
+
 ![image](https://github.com/user-attachments/assets/b700d246-3527-4d22-ace4-63568ae59b00)
+
 ![image](https://github.com/user-attachments/assets/2e8dce13-665a-46fb-806c-7efa80c78177)
+
 ________________________________________
 **Author**
 
