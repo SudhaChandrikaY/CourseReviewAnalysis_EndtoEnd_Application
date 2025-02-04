@@ -3,7 +3,7 @@
 This repository implements a Course Review Analysis Application using NLP techniques and the BERT model. The project collects and analyzes course reviews, leveraging pre-trained transformers for sentiment classification and generating insights.
 
 ________________________________________
-Overview
+**Overview**
 1. BERT Model for Sentiment Analysis:
     - Trained on a dataset of 100K course reviews for sentiment classification.
     - Analyzes and classifies reviews into predefined categories.
@@ -17,12 +17,26 @@ Overview
     - Compares BERT with other models.
     - BERT outperforms alternatives and is chosen for production.
 ________________________________________
+**Tech Stack**
+
+Frontend: HTML, CSS, and JavaScript for the UI
+Backend: Python with Flask for API and data handling
+Database: SQLite for managing course data and reviews
+Model: DeBERTa (variant of BERT) for Sentiment Analysis
+Hosting/Development
+Model training: Google Colab Pro (A100 GPU)
+Application: Local (VS Code)
+________________________________________
 **Features**
 - Train BERT Model: Processes 100K course reviews for sentiment classification.
 - Data Visualization: Displays label distributions and word clouds for analysis.
 - Flask Integration: Runs a web application to handle and classify new course reviews.
 - Interactive UI: Developed using HTML, CSS, and JavaScript to show predictions.
 - Model Comparison: Evaluates multiple models, highlighting BERT's superior accuracy.
+
+________________________________________
+**Flow Chart**
+![image](https://github.com/user-attachments/assets/24eb0aef-c428-41b6-84fd-f9fa6c594db0)
 ________________________________________
 **Requirements**
 - Python 3.x
